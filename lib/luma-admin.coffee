@@ -1,101 +1,90 @@
 # Admin
 # =====
-class Admin
+class Luma.Collection
 
-  @_max_docs_to_explore: 100
+  @_prefix: "Luma_Collection"
 
-  @_collections:
-    collections: new Meteor.Collection "collections"
+  @schemas:
+    _counts: new SimpleSchema count: type: Number
 
-  @_user_is_admin: ( userId ) -> return true
+  @_counts: if Meteor.isClient then new Meteor.Collection( "#{ @_prefix }_counts", schema: @schemas._counts ) else "#{ @_prefix }_counts"
 
-  @addCollection: ( collection ) ->
+  @_andQueries: ( queries = [] ) ->
+    check queries, Array
+    if queries.length
+      return { $and: queries }
+    else return queries
+
+  @_checkCollection: ( collection ) ->
+    throw new Error "`collection` must be a Meteor.Collection" unless collection and collection._name
+
+  @getId: ( collection, suffix = "" ) ->
+    @_checkCollection collection
+    check suffix, String
+    suffix = "_#{ suffix }" if suffix.length
+    return "#{ @_prefix }_#{ collection._name }#{ suffix }"
+
+  @publish: ( collection, baseQuery = {}, baseOptions = {}, suffix = "" ) ->
+    @_checkCollection collection
     return unless Meteor.isServer
-    return if collection._name of @_collections
+    id = @getId collection, suffix
+    check id, String
+    check baseQuery, Object
+    check baseOptions, Object
+    Meteor.publish id, ( query = {}, options = { limit: 10 } ) ->
+      check query, Object
+      check options, Object
+      query = Luma.Collection._andQueries [ baseQuery, query ]
+      options = _.defaults options, baseOptions
+      return collection.find query, options
 
-    name = collection._name
-    methods = {}
-    methods[ "#{name}_insert" ] = (doc) ->
-      check doc, Object
-      return unless Admin._user_is_admin @userId
-      collection.insert(doc)
+  @getCount: ( collection, query = {}, id ) ->
+    @_checkCollection collection
+    check query, Object
+    check id, String
+    if Meteor.isServer
+      return collection.find( query ).count()
+    if Meteor.isClient
+      return Luma.Collection._counts.findOne( _id: id )?.count
 
-    methods[ "#{name}_update" ] = (id, update_dict) ->
-      check id, Match.Any
-      check update_dict, Object
-      return unless Admin._user_is_admin @userId
-      if collection.findOne(id)
-        collection.update(id, update_dict)
-      else
-        id = collection.findOne(new Meteor.Collection.ObjectID(id))
-        collection.update(id, update_dict)
+  @publishCount: ( collection, baseQuery = {}, suffix = "" ) ->
+    return unless Meteor.isServer
+    @_checkCollection collection
+    id = @getId collection, suffix
+    id = "#{ id }_count"
+    check id, String
+    check baseQuery, Object
+    Meteor.publish id, ( query = {} ) ->
+      self = @
+      check query, Object
+      query = Luma.Collection._andQueries [ baseQuery, query ]
+      initializing = true
+      handle = collection.find( query ).observeChanges
+        added: ->
+          unless initializing
+            count = Luma.Collection.getCount collection, query, id
+            self.changed Luma.Collection._counts, id, count: count
+        removed: ->
+          unless initializing
+            count = Luma.Collection.getCount collection, query, id
+            self.changed Luma.Collection._counts, id, count: count
+      initializing = false
+      count = Luma.Collection.getCount collection, query, id
+      self.added Luma.Collection._counts, id, count: count
+      self.ready()
+      self.onStop -> handle.stop()
 
-    methods[ "#{name}_delete" ] = (id) ->
-      check id, Match.Any
-      return unless Admin._user_is_admin @userId
-      if collection.findOne(id)
-        collection.remove(id)
-      else
-        id = collection.findOne(new Meteor.Collection.ObjectID(id))
-        collection.remove(id)
+  @subscribe: ( collection, query = {}, options = null, subOptions = {} ) ->
+    docs = subOptions.docs or true
+    counts = subOptions.counts or true
+    suffix = subOptions.suffix or ""
+    id = @getId collection, suffix
+    check id, String
+    handles = []
+    handles.push Meteor.subscribe id, query, options if docs
+    handles.push Meteor.subscribe "#{ id }_count", query if counts
+    return handles
 
-    Meteor.methods methods
 
-    Meteor.publish name, (sort, filter, limit, unknown_arg) ->
-      check sort, Match.Optional(Object)
-      check filter, Match.Optional(Object)
-      check limit, Match.Optional(Number)
-      check unknown_arg, Match.Any
-      return unless Admin._user_is_admin @userId
-      try
-        collection.find(filter, sort: sort, limit: limit)
-      catch e
-        console.log e
 
-    collection.find().observe
-      _suppress_initial: true  # fixes houston for large initial datasets
-      added: (document) ->
-        Admin._collections.collections.update {name},
-          $inc: {count: 1},
-          $addToSet: fields: $each: Admin._get_fields([document])
-      removed: (document) -> Admin._collections.collections.update {name}, {$inc: {count: -1}}
 
-    fields = Admin._get_fields_from_collection(collection)
-    c = Admin._collections.collections.findOne {name}
-    count = collection.find().count()
-    if c
-      Admin._collections.collections.update c._id, {$set: {count, fields}}
-    else
-      Admin._collections.collections.insert {name, count, fields}
-    Admin._collections[ name ] = collection
-
-  @_get_fields_from_collection: (collection) ->
-    # TODO(AMK) randomly sample the documents in question
-    Admin._get_fields(collection.find().fetch())
-
-  @_get_fields: (documents) ->
-    key_to_type = {_id: 'ObjectId'}
-
-    find_fields = (document, prefix='') ->
-      for key, value of _.omit(document, '_id')
-        if typeof value is 'object'
-
-          # handle dates like strings
-          if value instanceof Date
-            full_path_key = "#{prefix}#{key}"
-            key_to_type[full_path_key] = "Date"
-
-            # recurse into sub documents
-          else
-            find_fields value, "#{prefix}#{key}."
-        else if typeof value isnt 'function'
-          full_path_key = "#{prefix}#{key}"
-          key_to_type[full_path_key] = typeof value
-
-    for document in documents[ ..Admin._max_docs_to_explore ]
-      find_fields document
-
-    (name: key, type: value for key, value of key_to_type)
-
-  @_get_field_names = (documents) ->
-    _.pluck(Admin._get_fields(documents), 'name')

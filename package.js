@@ -6,7 +6,10 @@ Package.on_use(function (api, where) {
   api.use([
     'coffeescript',
     'underscore',
-    'luma-router'
+    'collection2',
+    'simple-schema',
+    'luma-router',
+    'luma-ui'
   ],[ 'client', 'server' ]);
 
   // for helpers
@@ -18,7 +21,7 @@ Package.on_use(function (api, where) {
   ], [ 'client' ]);
 
   api.export([
-    'Admin'
+    'Luma'
   ], ['client','server']);
 
   api.add_files([
