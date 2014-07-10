@@ -5,7 +5,8 @@ Package.describe({
 Package.on_use(function (api, where) {
   api.use([
     'coffeescript',
-    'underscore'
+    'underscore',
+    'luma-router'
   ],[ 'client', 'server' ]);
 
   // for helpers
@@ -16,7 +17,9 @@ Package.on_use(function (api, where) {
     'spacebars'
   ], [ 'client' ]);
 
-  api.export([], ['client','server']);
+  api.export([
+    'Admin'
+  ], ['client','server']);
 
   api.add_files([
     'lib/luma-admin.coffee'
