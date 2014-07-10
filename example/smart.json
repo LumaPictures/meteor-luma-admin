@@ -1,0 +1,13 @@
+{
+  "packages": {
+    "luma-admin": {
+      "path": ".."
+    },
+    "luma-ui": {
+      "path": "../../luma-ui"
+    },
+    "luma-router": {
+      "path": "../../luma-router"
+    }
+  }
+}

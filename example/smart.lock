@@ -1,0 +1,47 @@
+{
+  "meteor": {},
+  "dependencies": {
+    "basePackages": {
+      "luma-admin": {
+        "path": ".."
+      },
+      "luma-ui": {
+        "path": "../../luma-ui"
+      },
+      "luma-router": {
+        "path": "../../luma-router"
+      }
+    },
+    "packages": {
+      "luma-admin": {
+        "path": ".."
+      },
+      "luma-ui": {
+        "path": "../../luma-ui"
+      },
+      "luma-router": {
+        "path": "../../luma-router"
+      },
+      "blaze-layout": {
+        "git": "https://github.com/EventedMind/blaze-layout.git",
+        "tag": "v0.2.5",
+        "commit": "273e3ab7d005d91a1a59c71bd224533b4dae2fbd"
+      },
+      "iron-router": {
+        "git": "https://github.com/EventedMind/iron-router.git",
+        "tag": "v0.7.1",
+        "commit": "d1ffb3f06ea4c112132b030f2eb1a70b81675ecb"
+      },
+      "iron-router-progress": {
+        "git": "https://github.com/Multiply/iron-router-progress.git",
+        "tag": "v0.4.1",
+        "commit": "496fcda9a6ec352b4733725f60c6f280250c3541"
+      },
+      "jquery-ui": {
+        "git": "https://github.com/TimHeckel/meteor-jquery-ui.git",
+        "tag": "v1.9.2",
+        "commit": "c437d45edcf1367df8d5ffa8bad2867758030bd2"
+      }
+    }
+  }
+}
