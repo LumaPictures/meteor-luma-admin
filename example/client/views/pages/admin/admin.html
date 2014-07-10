@@ -1,0 +1,21 @@
+<template name="admin">
+  {{#panel}}
+    {{> panelHeading title="Collections" iconn="icon-table2" }}
+    <div class="table-responsive">
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>Collection</th>
+            <th>Count</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each collections}}
+            <tr>{{name}}</tr>
+            <tr>{{count}}</tr>
+          {{/each}}
+        </tbody>
+      </table>
+    </div>
+  {{/panel}}
+</template>

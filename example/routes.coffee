@@ -6,6 +6,16 @@ Luma.Router.addRoutes [{
     title: "luma-admin"
     subtitle: "Administrative views and helpers for luma apps"
 },{
+  route: 'admin'
+  path: '/admin'
+  controller: "AdminController"
+  page:
+    title: "Admin"
+    subtitle: "Manage application collections"
+  nav:
+    priority: 1
+    icon: 'icon-home'
+},{
   route: 'gitHub'
   path: "https://github.com/LumaPictures/meteor-luma-admin"
   external: true

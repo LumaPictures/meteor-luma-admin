@@ -1,0 +1,1 @@
+Admin.addCollection Luma.Router.collection
