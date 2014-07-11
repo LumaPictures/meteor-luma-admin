@@ -1,2 +1,2 @@
-Luma.Collection.publish Luma.Router.collection
-Luma.Collection.publishCount Luma.Router.collection
+Luma.Admin.add Luma.Router.collection
+Luma.Admin.sync()

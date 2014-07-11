@@ -1,5 +1,6 @@
 # Admin
 # =====
+root = exports ? this
 class Luma.Collection
 
   @_prefix: "Luma_Collection"
@@ -15,32 +16,49 @@ class Luma.Collection
       return { $and: queries }
     else return queries
 
-  @_checkCollection: ( collection ) ->
+  @getCollections: ( callback ) ->
+    return if Meteor.isClient
+    throw new Error "`callback` must be a function." unless _.isFunction callback
+    mongo_driver = MongoInternals?.defaultRemoteCollectionDriver() or Meteor._RemoteCollectionDriver
+    mongo_driver.mongo.db.collections callback
+
+  @checkCollection: ( collection ) ->
     throw new Error "`collection` must be a Meteor.Collection" unless collection and collection._name
 
   @getId: ( collection, suffix = "" ) ->
-    @_checkCollection collection
+    @checkCollection collection if Meteor.isServer
+    check collection, String if Meteor.isClient
+    name = if Meteor.isServer then collection._name else collection
     check suffix, String
     suffix = "_#{ suffix }" if suffix.length
-    return "#{ @_prefix }_#{ collection._name }#{ suffix }"
+    return "#{ @_prefix }_#{ name }#{ suffix }"
 
-  @publish: ( collection, baseQuery = {}, baseOptions = {}, suffix = "" ) ->
-    @_checkCollection collection
+  @publish: ( collection, baseQuery = {}, baseOptions = {}, subOptions = {} ) ->
     return unless Meteor.isServer
+    @checkCollection collection
+    check subOptions, Object
+    docs = subOptions.docs or true
+    counts = subOptions.counts or true
+    suffix = subOptions.suffix or ""
     id = @getId collection, suffix
     check id, String
     check baseQuery, Object
     check baseOptions, Object
-    Meteor.publish id, ( query = {}, options = { limit: 10 } ) ->
-      check query, Object
-      check options, Object
-      query = Luma.Collection._andQueries [ baseQuery, query ]
-      options = _.defaults options, baseOptions
-      return collection.find query, options
+    Luma.Collection.publishCount collection, baseQuery, suffix if counts
+    if docs
+      Meteor.publish id, ( query = {}, options = { limit: 10 } ) ->
+        check query, Object
+        check options, Object
+        query = Luma.Collection._andQueries [ baseQuery, query ]
+        options = _.defaults options, baseOptions
+        return collection.find query, options
 
-  @getCount: ( collection, query = {}, id ) ->
-    @_checkCollection collection
-    check query, Object
+  @getCount: ( collection, suffix = "", query = {} ) ->
+    @checkCollection collection if Meteor.isServer
+    check collection, String if Meteor.isClient
+    check query, Object if Meteor.isServer
+    id = @getId collection, suffix
+    id = "#{ id }_count"
     check id, String
     if Meteor.isServer
       return collection.find( query ).count()
@@ -49,7 +67,7 @@ class Luma.Collection
 
   @publishCount: ( collection, baseQuery = {}, suffix = "" ) ->
     return unless Meteor.isServer
-    @_checkCollection collection
+    @checkCollection collection
     id = @getId collection, suffix
     id = "#{ id }_count"
     check id, String
@@ -62,14 +80,14 @@ class Luma.Collection
       handle = collection.find( query ).observeChanges
         added: ->
           unless initializing
-            count = Luma.Collection.getCount collection, query, id
+            count = Luma.Collection.getCount collection, id, query
             self.changed Luma.Collection._counts, id, count: count
         removed: ->
           unless initializing
-            count = Luma.Collection.getCount collection, query, id
+            count = Luma.Collection.getCount collection, id, query
             self.changed Luma.Collection._counts, id, count: count
       initializing = false
-      count = Luma.Collection.getCount collection, query, id
+      count = Luma.Collection.getCount collection, id, query
       self.added Luma.Collection._counts, id, count: count
       self.ready()
       self.onStop -> handle.stop()
@@ -84,6 +102,81 @@ class Luma.Collection
     handles.push Meteor.subscribe id, query, options if docs
     handles.push Meteor.subscribe "#{ id }_count", query if counts
     return handles
+
+if Meteor.isClient
+  UI.registerHelper "getCount", ( collection_name ) -> return Luma.Collection.getCount collection_name
+    
+class Luma.Admin
+
+  @_collections: []
+
+  @collections: new Meteor.Collection "admin_collections"
+
+  @_ignored_prefixes: [
+    'system'
+    'admin'
+  ]
+  
+  @add: ( collection, publishCallback = null ) ->
+    return unless Meteor.isServer
+    Luma.Collection.checkCollection collection
+    @_collections[ collection._name ] = collection
+    unless Luma.Admin.collections.findOne( _id: collection._name )
+      Luma.Admin.collections.insert _id: collection._name
+    if _.isFunction publishCallback
+      publishCallback()
+    else
+      Luma.Collection.publish collection
+      Luma.Collection.publishCount collection
+
+  @_isCollectionSyncable: ( collection ) ->
+    for prefix in Luma.Admin._ignored_prefixes
+      syncable = collection.indexOf prefix
+      return true if syncable is 0
+
+  @_getSyncableCollections: ( collections ) ->
+    collections = _.pluck collections, "collectionName"
+    return _.reject collections, @_isCollectionSyncable
+
+  @_setupCollections: ( collections ) ->
+    for collection in collections
+      unless collection of Luma.Admin._collections
+        new_collection = null
+        try
+          new_collection = new Meteor.Collection collection
+        catch e
+          for key, value of root
+            if collection == value?._name
+              new_collection = value
+
+        if new_collection?
+          console.log new_collection._name
+          Luma.Admin._collections[ new_collection._name ] = new_collection
+          unless Luma.Admin.collections.findOne( _id: new_collection._name )
+            Luma.Admin.collections.insert _id: new_collection._name
+          Luma.Collection.publish Luma.Admin._collections[ new_collection._name ]
+        else
+          console.log """
+Luma.Admin: couldn't find access to the #{ collection } collection.
+If you'd like to access the collection from Luma.Admin, either
+(1) make sure it is available as a global (top-level namespace) within the server or
+(2) add the collection manually via Luma.Admin.add
+"""
+
+  @sync: ->
+    return unless Meteor.isServer
+    boundSyncCollections = Meteor.bindEnvironment Luma.Admin._syncCollections
+    Luma.Collection.getCollections boundSyncCollections
+    Luma.Collection.publish Luma.Admin.collections
+
+  @_syncCollections: ( unknownArg, collections ) ->
+    collections = Luma.Admin._getSyncableCollections collections
+    Luma.Admin._setupCollections collections
+
+
+
+
+
 
 
 

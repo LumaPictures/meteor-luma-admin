@@ -1,6 +1,6 @@
 <template name="admin">
   {{#panel}}
-    {{> panelHeading title="Collections" iconn="icon-table2" }}
+    {{> panelHeading title="Collections" icon="icon-table2" }}
     <div class="table-responsive">
       <table class="table table-striped">
         <thead>
@@ -11,8 +11,7 @@
         </thead>
         <tbody>
           {{#each collections}}
-            <tr>{{name}}</tr>
-            <tr>{{count}}</tr>
+            <tr><td>{{_id}}</td><td>{{getCount _id}}</td></tr>
           {{/each}}
         </tbody>
       </table>
