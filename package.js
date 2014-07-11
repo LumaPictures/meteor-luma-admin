@@ -9,7 +9,8 @@ Package.on_use(function (api, where) {
     'collection2',
     'simple-schema',
     'luma-router',
-    'luma-ui'
+    'luma-ui',
+    'jquery-select2'
   ],[ 'client', 'server' ]);
 
   // for helpers
@@ -27,6 +28,11 @@ Package.on_use(function (api, where) {
   api.add_files([
     'lib/luma-admin.coffee'
   ], [ 'client', 'server' ]);
+
+  api.add_files([
+    'lib/views/admin/admin.html',
+    'lib/views/admin/admin.coffee'
+  ], [ 'client' ]);
 });
 
 Package.on_test(function (api) {

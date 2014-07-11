@@ -1,0 +1,51 @@
+<template name="admin">
+  {{#panel}}
+    {{> panelHeading title="Collections" icon="icon-table2" }}
+    {{#panelBody}}
+    <div class="table-responsive">
+      <div class="row">
+          <div class="col-md-12">
+              {{#select2 collections_filter }}
+                  {{#each collections_list}}
+                  <option value="{{_id}}">{{_id}}</option>
+                  {{/each}}
+              {{/select2}}
+          </div>
+      </div>
+      <table class="table table-striped">
+        <thead>
+          <tr><td></td></tr>
+        </thead>
+        <tbody>
+          {{#each collections}}
+            <tr>
+                <td>{{_id}}</td>
+                <!--<td>
+                    {{#if getCount _id}}
+                        {{#badge styles="label-success"}}
+                            {{getCount _id}}
+                        {{/badge}}
+                    {{else}}
+                        {{#badge styles="label-warning"}}
+                            Processing...
+                        {{/badge}}
+                    {{/if}}
+                </td>-->
+            </tr>
+          {{/each}}
+        </tbody>
+      </table>
+      <!--<div class="row">
+          <div class="col-md-12">
+              <div class="well">
+                  <ul class="pager">
+                      <li class="previous {{#if firstPage}}disabled{{/if}}"><a href="#">&larr; Previous</a></li>
+                      <li class="next {{#if lastPage}}disabled{{/if}}"><a href="#">Next &rarr;</a></li>
+                  </ul>
+              </div>
+          </div>
+      </div>-->
+    </div>
+    {{/panelBody}}
+  {{/panel}}
+</template>

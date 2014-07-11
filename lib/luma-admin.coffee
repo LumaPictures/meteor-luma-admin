@@ -33,7 +33,7 @@ class Luma.Collection
     suffix = "_#{ suffix }" if suffix.length
     return "#{ @_prefix }_#{ name }#{ suffix }"
 
-  @publish: ( collection, baseQuery = {}, baseOptions = {}, subOptions = {} ) ->
+  @publish: ( collection, baseQuery = {}, baseOptions = { limit: 10, skip: 0 }, subOptions = {} ) ->
     return unless Meteor.isServer
     @checkCollection collection
     check subOptions, Object
@@ -46,11 +46,10 @@ class Luma.Collection
     check baseOptions, Object
     Luma.Collection.publishCount collection, baseQuery, suffix if counts
     if docs
-      Meteor.publish id, ( query = {}, options = { limit: 10 } ) ->
+      Meteor.publish id, ( query = {}, options = { limit: 10, skip: 0 } ) ->
         check query, Object
         check options, Object
         query = Luma.Collection._andQueries [ baseQuery, query ]
-        options = _.defaults options, baseOptions
         return collection.find query, options
 
   @getCount: ( collection, suffix = "", query = {} ) ->
@@ -92,7 +91,10 @@ class Luma.Collection
       self.ready()
       self.onStop -> handle.stop()
 
-  @subscribe: ( collection, query = {}, options = null, subOptions = {} ) ->
+  @subscribe: ( collection, query = {}, options = {}, subOptions = {} ) ->
+    check query, Object
+    check options, Object
+    check subOptions, Object
     docs = subOptions.docs or true
     counts = subOptions.counts or true
     suffix = subOptions.suffix or ""
@@ -150,7 +152,6 @@ class Luma.Admin
               new_collection = value
 
         if new_collection?
-          console.log new_collection._name
           Luma.Admin._collections[ new_collection._name ] = new_collection
           unless Luma.Admin.collections.findOne( _id: new_collection._name )
             Luma.Admin.collections.insert _id: new_collection._name

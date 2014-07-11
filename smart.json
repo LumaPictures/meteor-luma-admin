@@ -9,6 +9,7 @@
     "collection2": {},
     "simple-schema": {},
     "luma-router": {},
-    "luma-ui": {}
+    "luma-ui": {},
+    "jquery-select2": {}
   }
 }
