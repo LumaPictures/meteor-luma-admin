@@ -1,6 +1,14 @@
 # Admin
 # =====
 root = exports ? this
+
+Luma.Subscriptions =
+  Default: Meteor
+
+  Global: new SubsManager
+    cacheLimit: 9999
+    expireIn: 9999
+
 class Luma.Collection
 
   @_prefix: "Luma_Collection"
@@ -49,6 +57,7 @@ class Luma.Collection
       Meteor.publish id, ( query = {}, options = { limit: 10, skip: 0 } ) ->
         check query, Object
         check options, Object
+        options.skip = 0 if options.skip < 0
         query = Luma.Collection._andQueries [ baseQuery, query ]
         return collection.find query, options
 
@@ -97,12 +106,18 @@ class Luma.Collection
     check subOptions, Object
     docs = subOptions.docs or true
     counts = subOptions.counts or true
+    manager = subOptions.manager or null
     suffix = subOptions.suffix or ""
     id = @getId collection, suffix
     check id, String
     handles = []
-    handles.push Meteor.subscribe id, query, options if docs
-    handles.push Meteor.subscribe "#{ id }_count", query if counts
+    if manager and Luma.Subscriptions[ manager ]
+      sub = Luma.Subscriptions[ manager ]
+    else sub = Luma.Subscriptions.Default
+    if docs
+      handles.push sub.subscribe id, query, options
+    if counts
+      handles.push sub.subscribe "#{ id }_count", query
     return handles
 
 if Meteor.isClient
@@ -120,16 +135,18 @@ class Luma.Admin
   ]
   
   @add: ( collection, publishCallback = null ) ->
-    return unless Meteor.isServer
-    Luma.Collection.checkCollection collection
-    @_collections[ collection._name ] = collection
-    unless Luma.Admin.collections.findOne( _id: collection._name )
-      Luma.Admin.collections.insert _id: collection._name
-    if _.isFunction publishCallback
-      publishCallback()
-    else
-      Luma.Collection.publish collection
-      Luma.Collection.publishCount collection
+    if Meteor.isClient
+      Luma.Admin._collections[ collection._name ] = collection
+    if Meteor.isServer
+      Luma.Collection.checkCollection collection
+      @_collections[ collection._name ] = collection
+      unless Luma.Admin.collections.findOne( _id: collection._name )
+        Luma.Admin.collections.insert _id: collection._name
+      if _.isFunction publishCallback
+        publishCallback()
+      else
+        Luma.Collection.publish collection
+        Luma.Collection.publishCount collection
 
   @_isCollectionSyncable: ( collection ) ->
     for prefix in Luma.Admin._ignored_prefixes

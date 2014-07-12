@@ -1,7 +1,7 @@
 Luma.Router.addRoutes [{
   route: 'home'
   path: '/'
-  controller: "ExampleController"
+  controller: "PageController"
   page:
     title: "luma-admin"
     subtitle: "Administrative views and helpers for luma apps"
@@ -15,6 +15,17 @@ Luma.Router.addRoutes [{
   nav:
     priority: 1
     icon: 'icon-home'
+},{
+  route: 'admin_collection'
+  path: '/admin/collection/:_id'
+  controller: "AdminCollectionController"
+  page:
+    title: "Browse Collection"
+    subtitle: "Create, Edit, and Filter a Collection"
+  breadcrumbs: [{
+    title: "Admin"
+    route: 'admin'
+  }]
 },{
   route: 'gitHub'
   path: "https://github.com/LumaPictures/meteor-luma-admin"

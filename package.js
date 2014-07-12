@@ -10,7 +10,8 @@ Package.on_use(function (api, where) {
     'simple-schema',
     'luma-router',
     'luma-ui',
-    'jquery-select2'
+    'jquery-select2',
+    'subs-manager'
   ],[ 'client', 'server' ]);
 
   // for helpers
@@ -31,7 +32,9 @@ Package.on_use(function (api, where) {
 
   api.add_files([
     'lib/views/admin/admin.html',
-    'lib/views/admin/admin.coffee'
+    'lib/views/admin/admin.coffee',
+    'lib/views/admin_collection/admin_collection.html',
+    'lib/views/admin_collection/admin_collection.coffee'
   ], [ 'client' ]);
 });
 

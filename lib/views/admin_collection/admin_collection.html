@@ -1,0 +1,36 @@
+<template name="admin_collection">
+    {{#panel}}
+        {{> panelHeading title=collection }}
+        {{#panelBody}}
+        <div class="table-responsive">
+            <div class="row">
+                <div class="col-md-12">
+                    <h1>Total Documents : {{#badge}}{{total_count}}{{/badge}}</h1>
+                </div>
+            </div>
+            <table class="table table-striped">
+                <thead>
+                <tr><td>_id</td></tr>
+                </thead>
+                <tbody>
+                {{#each documents}}
+                <tr>
+                    <td>{{_id}}</td>
+                </tr>
+                {{/each}}
+                </tbody>
+            </table>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="well">
+                        <ul class="pager">
+                            <li class="previous {{#if firstPage}}disabled{{/if}}"><a href="#">&larr; Previous</a></li>
+                          <li class="next {{#if lastPage}}disabled{{/if}}"><a href="#">Next &rarr;</a></li>
+                      </ul>
+                  </div>
+              </div>
+          </div>
+        </div>
+        {{/panelBody}}
+    {{/panel}}
+</template>

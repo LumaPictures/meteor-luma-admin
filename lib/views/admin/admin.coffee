@@ -26,23 +26,11 @@ Template.admin.events
     collections.query = query
     Session.set "admin:collections", collections
 
-  "click .previous": ( event, template ) ->
-    return false if $( event.target ).parent().hasClass( "disabled" )
-    collections = Session.get "#{ @route }:collections"
-    collections.options.skip = collections.options.skip - collections.options.limit
-    Session.set "#{ @route }:collections", collections
-
-  "click .next": ( event, template ) ->
-    return false if $( event.target ).parent().hasClass( "disabled" )
-    collections = Session.get "#{ @route }:collections"
-    collections.options.skip = collections.options.limit + collections.options.skip
-    Session.set "#{ @route }:collections", collections
-
 # ##### admin.helpers()
 Template.admin.helpers
   collections: ->
     collections = Session.get("#{ @route }:collections" )
-    return Luma.Admin.collections.find collections.query
+    return Luma.Admin.collections.find collections.query if collections
 
   collections_filter:
       id: "collections-filter"
@@ -52,12 +40,3 @@ Template.admin.helpers
         allowClear: true
         placeholder: "Seach Collections..."
       selected: []
-
-  firstPage: ->
-    options = Session.get("#{ @route }:collections" )?.options
-    return true unless options.skip - options.limit >= 0
-
-  lastPage: ->
-    options = Session.get("#{ @route }:collections" )?.options
-    next_page = options.skip + options.limit
-    return true if next_page >= Luma.Collection.getCount("admin_collections")

@@ -37,6 +37,11 @@
         "tag": "v0.1.12",
         "commit": "a33712a67f64559a730a3a6b6e97310b2dd6a6d0"
       },
+      "subs-manager": {
+        "git": "https://github.com/meteorhacks/subs-manager.git",
+        "tag": "v1.0.1",
+        "commit": "38317052d1601002d4dff537e4e0f61d1aa36e6d"
+      },
       "blaze-layout": {
         "git": "https://github.com/EventedMind/blaze-layout.git",
         "tag": "v0.2.5",
